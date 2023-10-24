@@ -1,4 +1,4 @@
-import p5Types from "p5";
+import p5Types from 'p5';
 
 export class Agent {
   pos: p5Types.Vector; // エージェントの位置
@@ -27,6 +27,18 @@ export class Agent {
   update() {
     this.vec.add(this.acc);
     this.pos.add(this.vec);
+
+    if (this.pos.x < 0) {
+      this.pos.x = this.p5.width - (-this.pos.x % this.p5.width);
+    } else if (this.pos.x > this.p5.width) {
+      this.pos.x = this.pos.x % this.p5.width;
+    }
+
+    if (this.pos.y < 0) {
+      this.pos.y = this.p5.height - (-this.pos.y % this.p5.height);
+    } else if (this.pos.y > this.p5.windowHeight) {
+      this.pos.y = this.pos.y % this.p5.height;
+    }
   }
 
   /**
