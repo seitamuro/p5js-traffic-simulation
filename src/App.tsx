@@ -7,7 +7,7 @@ import { Agent } from './Agent';
 function App() {
 
   const agents: Agent[] = []
-  const agent_num = 100;
+  const agent_num = 10;
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5.createCanvas(p5.windowWidth, p5.windowHeight).parent(canvasParentRef);
@@ -19,7 +19,11 @@ function App() {
 
   const draw = (p5: p5Types) => {
     p5.background(0);
-    agents.forEach(agent => { agent.update(); agent.draw(); });
+    agents.forEach(agent => {
+      agent.update();
+      agent.isHits(agents);
+      agent.draw();
+    });
   }
 
   const windowResized = (p5: p5Types) => {
