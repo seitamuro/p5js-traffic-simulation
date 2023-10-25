@@ -10,7 +10,7 @@ export class Agent {
 
   /**
    * エージェントの生成
-   * @param p5 p5インスタンス
+   * @param {p5Types} p5 p5インスタンス
    */
   constructor(p5: p5Types) {
     this.pos = p5.createVector(p5.random(p5.width), p5.random(p5.height));
@@ -47,5 +47,34 @@ export class Agent {
   draw() {
     this.p5.fill(this.color);
     this.p5.ellipse(this.pos.x, this.pos.y, this.r, this.r);
+  }
+
+  /**
+   * 渡されたエージェントとの衝突判定を行う
+   * @param {Agent} agent 衝突判定を行うエージェント
+   * @return {boolean} 衝突しているかどうか
+   */
+  isHit(agent: Agent): boolean {
+    if (
+      this.p5.dist(this.pos.x, this.pos.y, agent.pos.x, agent.pos.y) <
+      this.r + agent.r
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * 複数のエージェントとの衝突判定を行う
+   * @param {Agent[]} agents 衝突判定を行うエージェントの配列
+   * @return {boolean} いづれかのエージェントと衝突しているか
+   */
+  isHits(agents: Agent[]): boolean {
+    for (const agent of agents) {
+      if (this.isHit(agent)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
