@@ -26,6 +26,8 @@ export class Agent {
   r: number; // エージェントの半径
   state: AgentState = AgentState.Initial; // エージェントの状態
   properties: AgentProperty; // エージェントの状態に応じたプロパティ
+  eval: number;
+  genome: number[];
 
   /**
    * エージェントの生成
@@ -34,10 +36,12 @@ export class Agent {
   constructor(p5: p5Types) {
     this.pos = p5.createVector(p5.random(p5.width), p5.random(p5.height));
     this.vec = p5.createVector(p5.random(-1, 1), p5.random(-1, 1));
-    this.acc = p5.createVector(0, 0);
+    this.acc = p5.createVector(0.0, 0.0);
     this.p5 = p5;
     this.r = 20;
     this.properties = this.createProperties();
+    this.eval = 0;
+    this.genome = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1];
   }
 
   /**
@@ -51,11 +55,37 @@ export class Agent {
   }
 
   /**
+   * エージェントの進行方向を決める
+   *
+   * @param {Agent[]} situation 周囲のエージェント
+   */
+  decideAccelerate(situation: Agent[]) {
+    if (situation.length === 0) {
+      this.acc.x += this.acc.x * this.genome[0] + this.vec.x * this.genome[1];
+      this.acc.y += this.acc.y * this.genome[2] + this.vec.y * this.genome[3];
+    } else {
+      situation.forEach((agent) => {
+        this.acc.x +=
+          this.acc.x * this.genome[4] +
+          this.vec.x * this.genome[5] +
+          agent.acc.x * this.genome[6] +
+          agent.vec.x * this.genome[7];
+        this.acc.y +=
+          this.acc.y * this.genome[8] +
+          this.vec.y * this.genome[9] +
+          agent.acc.y * this.genome[10] +
+          agent.vec.y * this.genome[11];
+      });
+    }
+  }
+
+  /**
    * エージェントの情報を更新する
    */
   update() {
     this.changeState(AgentState.Initial);
 
+    this.acc = this.acc.mult(this.p5.createVector(0.1, 0.1));
     this.vec.add(this.acc);
     this.pos.add(this.vec);
 
@@ -69,6 +99,12 @@ export class Agent {
       this.pos.y = this.p5.height - (-this.pos.y % this.p5.height);
     } else if (this.pos.y > this.p5.height) {
       this.pos.y = this.pos.y % this.p5.height;
+    }
+
+    if (this.state === AgentState.Hit) {
+      this.eval -= 1;
+    } else {
+      this.eval += 1;
     }
   }
 
