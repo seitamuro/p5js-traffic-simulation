@@ -1,5 +1,7 @@
 import p5Types from 'p5';
 
+const max_acc = 3;
+
 enum AgentState {
   Initial,
   Hit,
@@ -41,7 +43,7 @@ export class Agent {
     this.r = 20;
     this.properties = this.createProperties();
     this.eval = 0;
-    this.genome = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1];
+    this.genome = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
   }
 
   /**
@@ -61,16 +63,16 @@ export class Agent {
    */
   decideAccelerate(situation: Agent[]) {
     if (situation.length === 0) {
-      this.acc.x += this.acc.x * this.genome[0] + this.vec.x * this.genome[1];
-      this.acc.y += this.acc.y * this.genome[2] + this.vec.y * this.genome[3];
+      this.acc.x = this.acc.x * this.genome[0]; // + this.vec.x * this.genome[1];
+      this.acc.y = this.acc.y * this.genome[2]; // + this.vec.y * this.genome[3];
     } else {
       situation.forEach((agent) => {
-        this.acc.x +=
+        this.acc.x =
           this.acc.x * this.genome[4] +
           this.vec.x * this.genome[5] +
           agent.acc.x * this.genome[6] +
           agent.vec.x * this.genome[7];
-        this.acc.y +=
+        this.acc.y =
           this.acc.y * this.genome[8] +
           this.vec.y * this.genome[9] +
           agent.acc.y * this.genome[10] +
@@ -80,14 +82,36 @@ export class Agent {
   }
 
   /**
+   * genomeを更新する
+   *
+   * @param {Agent} parent もう一人の親
+   */
+  getNewGenome(parent: Agent) {
+    // crossover
+    for (let i = 0; i < this.genome.length; i++) {
+      // crossover
+      if (Math.random() < 0.5) {
+        this.genome[i] = parent.genome[i];
+      }
+
+      // mutation
+      if (Math.random() < 0.1) {
+        this.genome[i] += Math.random() * 2 - 1;
+      }
+    }
+  }
+
+  /**
    * エージェントの情報を更新する
    */
   update() {
     this.changeState(AgentState.Initial);
 
-    this.acc = this.acc.mult(this.p5.createVector(0.1, 0.1));
-    this.vec.add(this.acc);
-    this.pos.add(this.vec);
+    this.decideAccelerate([]);
+    let _v = this.vec;
+    this.acc = this.acc.sub(_v.mult(_v).mult(10));
+    this.vec = this.vec.add(this.acc);
+    this.pos = this.pos.add(this.vec);
 
     if (this.pos.x < 0) {
       this.pos.x = this.p5.width - (-this.pos.x % this.p5.width);
@@ -102,9 +126,9 @@ export class Agent {
     }
 
     if (this.state === AgentState.Hit) {
-      this.eval -= 1;
+      this.eval -= 100;
     } else {
-      this.eval += 1;
+      this.eval += this.p5.dist(0, 0, this.vec.x, this.vec.y);
     }
   }
 
@@ -127,7 +151,6 @@ export class Agent {
       this.p5.dist(this.pos.x, this.pos.y, agent.pos.x, agent.pos.y) < this.r
     ) {
       this.changeState(AgentState.Hit);
-      console.log('isHit');
       return true;
     }
     return false;

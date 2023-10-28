@@ -3,12 +3,14 @@ import Sketch from "react-p5";
 import p5Types from "p5";
 
 import { Agent } from './Agent';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { sample } from "lodash";
 
 function App() {
   const agents: Agent[] = []
   const agent_num = 20;
   const initialized = useRef(false);
+  let t = 0;
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     if (!initialized.current) {
@@ -28,6 +30,19 @@ function App() {
       agent.isHits(agents);
       agent.draw();
     });
+
+    if (t > 1000) {
+      agents.sort((a, b) => b.eval - a.eval) // evalで降順にソート
+      console.log(`max eval: ${agents[0].eval}`)
+      agents.forEach(agent => {
+        agent.eval = 0;
+        agent.getNewGenome(sample(agents) ?? agent);
+      })
+      t = 0;
+    } else {
+      t += 1;
+    }
+
   }
 
   const windowResized = (p5: p5Types) => {
