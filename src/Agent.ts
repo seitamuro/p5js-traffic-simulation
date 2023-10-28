@@ -20,6 +20,8 @@ export class Agent {
   properties: AgentProperty; // エージェントの状態に応じたプロパティ
   eval: number;
   genome: number[];
+  default_color: p5Types.Color;
+  hit_color: p5Types.Color;
 
   agentProperties = {
     [AgentState.Initial]: {
@@ -58,6 +60,8 @@ export class Agent {
     ];
     this.direction = p5.createVector(0, 0);
     this.setDirection(p5.createVector(p5.random(0, 1), p5.random(0, 1)));
+    this.default_color = p5.color(255, 255, 255);
+    this.hit_color = p5.color(255, 0, 0);
   }
 
   /**
@@ -68,8 +72,6 @@ export class Agent {
   setDirection(newDirection: p5Types.Vector) {
     newDirection.div(this.p5.dist(0, 0, newDirection.x, newDirection.y));
     this.direction = newDirection;
-    this.acc.mult(this.direction);
-    this.vec = this.direction;
   }
 
   /**
@@ -87,7 +89,7 @@ export class Agent {
    *
    * @param {Agent[]} situation 周囲のエージェント
    */
-  decideAccelerate(situation: Agent[]) {
+  decideDirection(situation: Agent[]) {
     if (situation.length === 0) {
       let direction = this.p5.createVector(0, 0);
       direction.x = this.acc.x * this.genome[0] + this.vec.x * this.genome[1];
@@ -135,9 +137,8 @@ export class Agent {
   update() {
     this.changeState(AgentState.Initial);
 
-    this.decideAccelerate([]);
-    this.vec.add(this.acc.copy().add(this.vec.copy().mult(-0.001)));
-    this.pos.add(this.vec);
+    this.decideDirection([]);
+    this.pos.add(this.direction);
 
     if (this.pos.x < 0) {
       this.pos.x = this.p5.width - (-this.pos.x % this.p5.width);
@@ -151,19 +152,30 @@ export class Agent {
       this.pos.y = this.pos.y % this.p5.height;
     }
 
-    if (this.state === AgentState.Hit) {
-      this.eval -= 100;
-    } else {
-      this.eval += this.p5.dist(0, 0, this.vec.x, this.vec.y);
-    }
+    this.eval += this.p5.dist(0, 0, this.vec.x, this.vec.y);
   }
 
   /**
    * エージェントを描画する
    */
   draw() {
-    this.p5.fill(this.properties.color);
+    if (this.state === AgentState.Hit) {
+      this.p5.fill(this.hit_color);
+    } else {
+      this.p5.fill(this.default_color);
+    }
     this.p5.ellipse(this.pos.x, this.pos.y, this.r, this.r);
+  }
+
+  /**
+   * デフォルトの色を変更する
+   *
+   * @param {number} r
+   * @param {number} g
+   * @param {number} b
+   */
+  setDefaultColor(r: number, g: number, b: number) {
+    this.default_color = this.p5.color(r, g, b);
   }
 
   /**
@@ -173,10 +185,10 @@ export class Agent {
    */
   isHit(agent: Agent): boolean {
     if (agent === this) return false;
-    if (
-      this.p5.dist(this.pos.x, this.pos.y, agent.pos.x, agent.pos.y) < this.r
-    ) {
+    let d = this.p5.dist(this.pos.x, this.pos.y, agent.pos.x, agent.pos.y);
+    if (d < this.r) {
       this.changeState(AgentState.Hit);
+      this.eval -= (this.r - d) * 1;
       return true;
     }
     return false;

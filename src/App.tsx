@@ -37,9 +37,9 @@ function App() {
 
       for (let i = 0; i < agents.length; i++) {
         if (i === 0) {
-          agents[i].agentProperties[AgentState.Initial].color = [0, 255, 0];
+          agents[i].setDefaultColor(0, 255, 0)
         } else {
-          agents[i].agentProperties[AgentState.Initial].color = [255, 255, 255];
+          agents[i].setDefaultColor(255, 255, 255)
         }
         agents[i].changeState(AgentState.Initial);
       }
