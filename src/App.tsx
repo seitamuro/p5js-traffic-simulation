@@ -43,13 +43,13 @@ function App() {
           agents[i].setDefaultColor(255, 255, 255)
         }
 
-        if (i > agents.length / 2) {
-          agents[i].changeState(AgentState.Initial);
-        }
+        agents[i].changeState(AgentState.Initial);
       }
-      agents.forEach(agent => {
+      agents.forEach((agent, i) => {
         agent.eval = 0;
-        agent.getNewGenome(sample(agents) ?? agent);
+        if (i > agents.length / 2) {
+          agent.getNewGenome(sample(agents) ?? agent);
+        }
       })
       t = 0;
     } else {

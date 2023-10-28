@@ -58,7 +58,7 @@ export class Agent {
       1,
       1,
       1,
-      1,
+      40,
       1,
       1,
     ];
@@ -103,12 +103,17 @@ export class Agent {
     } else {
       let direction = this.p5.createVector(0);
       situation.forEach((agent) => {
+        let d = this.p5.dist(this.pos.x, this.pos.y, agent.pos.x, agent.pos.y);
         direction.x +=
-          this.direction.x * this.genome[4] +
-          agent.direction.x * this.genome[5];
+          (this.direction.x * this.genome[4] +
+            agent.direction.x * this.genome[5]) *
+          this.genome[8] *
+          (d - this.r);
         direction.y +=
-          this.direction.y * this.genome[6] +
-          agent.direction.y * this.genome[7];
+          (this.direction.y * this.genome[6] +
+            agent.direction.y * this.genome[7]) *
+          this.genome[8] *
+          (d - this.r);
       });
       this.setDirection(direction);
     }
@@ -138,6 +143,7 @@ export class Agent {
    * エージェントの情報を更新する
    */
   update() {
+    this.near_dist = this.genome[9];
     this.changeState(AgentState.Initial);
 
     this.decideDirection(this.near_agents);
