@@ -1,8 +1,6 @@
 import p5Types from 'p5';
 
-const max_acc = 3;
-
-enum AgentState {
+export enum AgentState {
   Initial,
   Hit,
 }
@@ -11,19 +9,11 @@ type AgentProperty = {
   color: p5Types.Color;
 };
 
-const agentProperties = {
-  [AgentState.Initial]: {
-    color: [255, 255, 255],
-  },
-  [AgentState.Hit]: {
-    color: [255, 0, 0],
-  },
-};
-
 export class Agent {
   pos: p5Types.Vector; // エージェントの位置
   vec: p5Types.Vector; // エージェントの速度
   acc: p5Types.Vector; // エージェントの加速度
+  direction: p5Types.Vector; // エージェントの進行方向
   p5: p5Types; // コンストラクタに渡されたp5を保持する
   r: number; // エージェントの半径
   state: AgentState = AgentState.Initial; // エージェントの状態
@@ -31,26 +21,62 @@ export class Agent {
   eval: number;
   genome: number[];
 
+  agentProperties = {
+    [AgentState.Initial]: {
+      color: [255, 255, 255],
+    },
+    [AgentState.Hit]: {
+      color: [255, 0, 0],
+    },
+  };
+
   /**
    * エージェントの生成
    * @param {p5Types} p5 p5インスタンス
    */
   constructor(p5: p5Types) {
     this.pos = p5.createVector(p5.random(p5.width), p5.random(p5.height));
-    this.vec = p5.createVector(p5.random(-1, 1), p5.random(-1, 1));
-    this.acc = p5.createVector(0.0, 0.0);
+    this.vec = p5.createVector(1.0, 1.0);
+    this.acc = p5.createVector(1.0, 0.0);
     this.p5 = p5;
     this.r = 20;
     this.properties = this.createProperties();
     this.eval = 0;
-    this.genome = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+    this.genome = [
+      p5.random(),
+      p5.random(),
+      p5.random(),
+      p5.random(),
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+    ];
+    this.direction = p5.createVector(0, 0);
+    this.setDirection(p5.createVector(p5.random(0, 1), p5.random(0, 1)));
+  }
+
+  /**
+   * エージェントの進行方向を設定
+   *
+   * @param {p5Types.Vector} newDirection
+   */
+  setDirection(newDirection: p5Types.Vector) {
+    newDirection.div(this.p5.dist(0, 0, newDirection.x, newDirection.y));
+    this.direction = newDirection;
+    this.acc.mult(this.direction);
+    this.vec = this.direction;
   }
 
   /**
    * プロパティを生成する
    */
   createProperties(): AgentProperty {
-    let c = agentProperties[this.state].color;
+    let c = this.agentProperties[this.state].color;
     return {
       color: this.p5.color(c[0], c[1], c[2]),
     };
@@ -63,8 +89,10 @@ export class Agent {
    */
   decideAccelerate(situation: Agent[]) {
     if (situation.length === 0) {
-      this.acc.x = this.acc.x * this.genome[0]; // + this.vec.x * this.genome[1];
-      this.acc.y = this.acc.y * this.genome[2]; // + this.vec.y * this.genome[3];
+      let direction = this.p5.createVector(0, 0);
+      direction.x = this.acc.x * this.genome[0] + this.vec.x * this.genome[1];
+      direction.y = this.acc.y * this.genome[2] + this.vec.y * this.genome[3];
+      this.setDirection(direction);
     } else {
       situation.forEach((agent) => {
         this.acc.x =
@@ -108,10 +136,8 @@ export class Agent {
     this.changeState(AgentState.Initial);
 
     this.decideAccelerate([]);
-    let _v = this.vec;
-    this.acc = this.acc.sub(_v.mult(_v).mult(10));
-    this.vec = this.vec.add(this.acc);
-    this.pos = this.pos.add(this.vec);
+    this.vec.add(this.acc.copy().add(this.vec.copy().mult(-0.001)));
+    this.pos.add(this.vec);
 
     if (this.pos.x < 0) {
       this.pos.x = this.p5.width - (-this.pos.x % this.p5.width);
