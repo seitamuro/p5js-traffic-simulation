@@ -22,6 +22,10 @@ export class Agent {
   genome: number[];
   default_color: p5Types.Color;
   hit_color: p5Types.Color;
+  most_nearest_agent: null | Agent;
+  most_nearest_dist: number = 0;
+  near_dist: number = 60;
+  near_agents: Agent[] = [];
 
   agentProperties = {
     [AgentState.Initial]: {
@@ -62,6 +66,7 @@ export class Agent {
     this.setDirection(p5.createVector(p5.random(0, 1), p5.random(0, 1)));
     this.default_color = p5.color(255, 255, 255);
     this.hit_color = p5.color(255, 0, 0);
+    this.most_nearest_agent = null;
   }
 
   /**
@@ -96,18 +101,16 @@ export class Agent {
       direction.y = this.acc.y * this.genome[2] + this.vec.y * this.genome[3];
       this.setDirection(direction);
     } else {
+      let direction = this.p5.createVector(0);
       situation.forEach((agent) => {
-        this.acc.x =
-          this.acc.x * this.genome[4] +
-          this.vec.x * this.genome[5] +
-          agent.acc.x * this.genome[6] +
-          agent.vec.x * this.genome[7];
-        this.acc.y =
-          this.acc.y * this.genome[8] +
-          this.vec.y * this.genome[9] +
-          agent.acc.y * this.genome[10] +
-          agent.vec.y * this.genome[11];
+        direction.x +=
+          this.direction.x * this.genome[4] +
+          agent.direction.x * this.genome[5];
+        direction.y +=
+          this.direction.y * this.genome[6] +
+          agent.direction.y * this.genome[7];
       });
+      this.setDirection(direction);
     }
   }
 
@@ -137,7 +140,8 @@ export class Agent {
   update() {
     this.changeState(AgentState.Initial);
 
-    this.decideDirection([]);
+    this.decideDirection(this.near_agents);
+    this.near_agents = [];
     this.pos.add(this.direction);
 
     if (this.pos.x < 0) {
@@ -152,7 +156,7 @@ export class Agent {
       this.pos.y = this.pos.y % this.p5.height;
     }
 
-    this.eval += this.p5.dist(0, 0, this.vec.x, this.vec.y);
+    this.eval += 1;
   }
 
   /**
@@ -186,9 +190,12 @@ export class Agent {
   isHit(agent: Agent): boolean {
     if (agent === this) return false;
     let d = this.p5.dist(this.pos.x, this.pos.y, agent.pos.x, agent.pos.y);
+    if (d < this.near_dist) {
+      this.near_agents.push(agent);
+    }
     if (d < this.r) {
       this.changeState(AgentState.Hit);
-      this.eval -= (this.r - d) * 1;
+      this.eval -= (this.r - d) * 2.0;
       return true;
     }
     return false;
@@ -200,12 +207,13 @@ export class Agent {
    * @return {boolean} いづれかのエージェントと衝突しているか
    */
   isHits(agents: Agent[]): boolean {
+    let ans = false;
     for (const agent of agents) {
       if (this.isHit(agent)) {
-        return true;
+        ans = true;
       }
     }
-    return false;
+    return ans;
   }
 
   /**

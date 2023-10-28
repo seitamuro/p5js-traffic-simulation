@@ -8,7 +8,7 @@ import { sample } from "lodash";
 
 function App() {
   const agents: Agent[] = []
-  const agent_num = 20;
+  const agent_num = 40;
   const initialized = useRef(false);
   let t = 0;
 
@@ -34,6 +34,7 @@ function App() {
     if (t > 1000) {
       agents.sort((a, b) => b.eval - a.eval) // evalで降順にソート
       console.log(`max eval: ${agents[0].eval}`)
+      console.log(`genome: ${agents[0].genome}`)
 
       for (let i = 0; i < agents.length; i++) {
         if (i === 0) {
@@ -41,7 +42,10 @@ function App() {
         } else {
           agents[i].setDefaultColor(255, 255, 255)
         }
-        agents[i].changeState(AgentState.Initial);
+
+        if (i > agents.length / 2) {
+          agents[i].changeState(AgentState.Initial);
+        }
       }
       agents.forEach(agent => {
         agent.eval = 0;
